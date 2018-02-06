@@ -6,8 +6,8 @@ use App\Player;
 
 class Tennis
 {
-    public $player1;
-    public $player2;
+    protected $player1;
+    protected $player2;
 
     protected $lookup = [
         0 => 'Love',
@@ -28,8 +28,15 @@ class Tennis
             return 'Win for ' . $this->winner()->name;
         }
 
-        $score = $this->lookup[$this->player1->points] . '-';
-        return $score .= $this->tied() ? 'All' : $this->lookup[$this->player2->points];
+        if ($this->hasTheAdvantage()) {
+            return 'Advantage ' . $this->winner()->name;
+        }
+
+        if ($this->inDeuce()) {
+            return 'Deuce';
+        }
+
+        return $this->generalScore();
     }
 
     protected function tied()
@@ -39,7 +46,17 @@ class Tennis
 
     protected function hasAWinner()
     {
-        return $this->hasEnoughPointsToBeWon() && $this->isLeadingByTwo();
+        return $this->hasEnoughPointsToBeWon() && $this->isLeadingByAtLeastTwo();
+    }
+
+    protected function hasTheAdvantage()
+    {
+        return $this->hasEnoughPointsToBeWon() && $this->isLeadingByOne();
+    }
+
+    protected function inDeuce()
+    {
+        return $this->player1->points + $this->player2->points >= 6 && $this->tied();
     }
 
     protected function hasEnoughPointsToBeWon()
@@ -47,7 +64,12 @@ class Tennis
         return max([$this->player1->points, $this->player2->points]) >= 4;
     }
 
-    protected function isLeadingByTwo()
+    protected function isLeadingByOne()
+    {
+        return abs($this->player1->points - $this->player2->points) == 1;
+    }
+
+    protected function isLeadingByAtLeastTwo()
     {
         return abs($this->player1->points - $this->player2->points) >= 2;
     }
@@ -57,5 +79,11 @@ class Tennis
         return $this->player1->points > $this->player2->points
                 ? $this->player1
                 : $this->player2;
+    }
+
+    protected function generalScore()
+    {
+        $score = $this->lookup[$this->player1->points] . '-';
+        return $score .= $this->tied() ? 'All' : $this->lookup[$this->player2->points];
     }
 }
